@@ -3,10 +3,11 @@
 // @description     Display the amount of notifications on Instagram Desktop similair to Discord.
 // @icon            https://www.google.com/s2/favicons?sz=64&domain=instagram.com
 // @author          KyleRifqi
+// @license         MIT
 // @namespace       http://github.com/kylerifqi
 // @downloadURL	    https://raw.github.com/kylerifqi/instagram-notification-display/main/instagram-favicon-notification-count.user.js
 // @match           *.instagram.com/*
-// @version         1.0
+// @version         1.1
 // @updateURL       https://raw.github.com/kylerifqi/instagram-notification-display/main/instagram-favicon-notification-count.user.js
 // @supportURL      https://github.com/kylerifqi/instagram-notification-display/issues
 // ==/UserScript==
@@ -17,7 +18,7 @@
 	/**
 	* Add notification badge (pill) to favicon in browser tab
 	* @url stackoverflow.com/questions/65719387/
-	* MODIFIED: _drawFavicon()
+	* MODIFIED
 	*/
 	class Badger {
 		canvas: HTMLCanvasElement;
@@ -35,7 +36,7 @@
 		position: string;
 		radius: number;
 		src: string;
-		_value: number;
+		value: number;
 
 		constructor(options: {
 			backgroundColor?: string;
@@ -45,28 +46,20 @@
 			radius?: number;
 			src?: string;
 		}) {
-			this.backgroundColor = '';
-			this.color = '';
-			this.size = 0;
-			this.position = '';
-			this.radius = 0;
-			this.src = '';
+			this.backgroundColor = options.backgroundColor || '#f00';
+			this.color = options.color || '#fff';
+			this.size = options.size || 0.6;
+			this.position = options.position || 'ne';
+			this.radius = options.radius || 8;
+			this.src = options.src || '';
 
-			Object.assign(this, {
-				backgroundColor: '#f00',
-				color: '#fff',
-				size: 0.6, // 0..1 (Scale in respect to the favicon image size)
-				position: 'ne', // Position inside favicon "n", "e", "s", "w", "ne", "nw", "se", "sw"
-				radius: 8, // Border radius
-				src: '', // Favicon source (dafaults to the <link> icon href)
-			}, options);
 			this.canvas = document.createElement('canvas');
 			this.src = (document.querySelector('link[rel$=icon]') as HTMLLinkElement)?.href;
 			this.ctx = this.canvas.getContext('2d')!;
 			this.faviconSize = 0;
 			this.offset = { x: 0, y: 0};
 			this.badgeSize = 0;
-			this._value = 0;
+			this.value = 0;
 
 			this.img = new Image();
 			this.img.addEventListener('load', () => {
@@ -135,7 +128,7 @@
 			const link = document.createElement('link');
 			link.type = 'image/x-icon';
 			link.rel = 'shortcut icon';
-			link.href = this.dataURL;
+			link.href = this.canvas.toDataURL();
 			document.getElementsByTagName('head')[0].appendChild(link);
 		}
 
@@ -146,24 +139,9 @@
 			this._drawFavicon();
 		}
 
-		// Public functions / methods:
-
 		update() {
-			this._value = Math.min(99, parseInt(this._value.toString(), 10));
+			this.value = Math.min(99, parseInt(this.value.toString(), 10));
 			this._draw();
-		}
-
-		get dataURL() {
-			return this.canvas.toDataURL();
-		}
-
-		get value() {
-			return this._value;
-		}
-
-		set value(val) {
-			this._value = val;
-			this.update();
 		}
 	}
 
@@ -177,8 +155,7 @@
 		const title = document.title;
 		const notifs = +(title.match(/\(([^)]+)\)/) ?? [0, 0])[1];
 		myBadger.value = notifs;
-		// console.log(myBadger.dataURL);
-		// document.querySelector('img').src = myBadger.dataURL;
+		myBadger.update()
 	};
 
 	window.addEventListener('load', updateFavicon, false);
